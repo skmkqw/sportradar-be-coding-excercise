@@ -1,6 +1,6 @@
 using SportsCalendar.Domain.Models;
 
-namespace SportsCalendar.Infrastructure.Repositories.Events;
+namespace SportsCalendar.Application.Interfaces.Repositories;
 
 public interface IEventRepository
 {

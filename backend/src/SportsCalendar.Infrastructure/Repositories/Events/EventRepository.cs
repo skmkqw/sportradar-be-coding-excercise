@@ -1,5 +1,6 @@
 using System.Data;
 using Dapper;
+using SportsCalendar.Application.Interfaces.Repositories;
 using SportsCalendar.Domain.Models;
 using SportsCalendar.Infrastructure.Extensions;
 
