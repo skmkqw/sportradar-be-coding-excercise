@@ -1,0 +1,117 @@
+USE master;
+
+IF EXISTS (SELECT name FROM sys.databases WHERE name = N'SportsCalendar')
+    DROP DATABASE SportsCalendar;
+
+CREATE DATABASE SportsCalendar;
+
+USE SportsCalendar;
+
+CREATE TABLE Sports (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(100) NOT NULL UNIQUE,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE Countries (
+    Code CHAR(3) PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE Competitions (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(255) NOT NULL,
+    Slug VARCHAR(255) NOT NULL UNIQUE,
+    _SportId INT FOREIGN KEY REFERENCES Sports(Id) NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE Stages (
+    Id VARCHAR(100) PRIMARY KEY,
+    Name VARCHAR(255) NOT NULL,
+    Ordering INT NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE Stadiums (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(255) NOT NULL,
+    _CountryCode CHAR(3) FOREIGN KEY REFERENCES Countries(Code),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE Teams (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(255) NOT NULL,
+    OfficialName VARCHAR(255) NOT NULL,
+    Slug VARCHAR(255) NOT NULL UNIQUE,
+    Abbreviation CHAR(5) NOT NULL,
+    _CountryCode CHAR(3) FOREIGN KEY REFERENCES Countries(Code),
+    _SportId INT FOREIGN KEY REFERENCES Sports(Id) NOT NULL,
+    StagePosition TINYINT NULL CHECK (StagePosition >= 1),
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE INDEX IX_Teams_SportId ON Teams(_SportId);
+
+CREATE INDEX IX_Teams_Slug ON Teams(Slug);
+
+CREATE TABLE Events (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    Name VARCHAR(500) NOT NULL,
+    Description VARCHAR(2000) NULL,
+    Season INT NOT NULL,
+    Status VARCHAR(50) NOT NULL CHECK (Status IN('scheduled', 'cancelled', 'playing', 'played')),
+    TimeVenueUTC TIME NOT NULL,
+    DateVenueUTC DATE NOT NULL,
+    GroupName VARCHAR(255) NULL,
+    _HomeTeamId INT FOREIGN KEY REFERENCES Teams(Id),
+    _AwayTeamId INT FOREIGN KEY REFERENCES Teams(Id),
+    _StadiumId INT FOREIGN KEY REFERENCES Stadiums(Id) ON DELETE SET NULL,
+    _StageId VARCHAR(100) FOREIGN KEY REFERENCES Stages(Id),
+    _CompetitionId INT FOREIGN KEY REFERENCES Competitions(Id) NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE INDEX IX_Events_DateVenueUTC ON Events(DateVenueUTC);
+
+CREATE INDEX IX_Events_Status ON Events(Status);
+
+CREATE INDEX IX_Events_CompetitionId ON Events(_CompetitionId);
+
+ALTER TABLE Events 
+ADD CONSTRAINT CHK_HomeAwayDifferent CHECK (_HomeTeamId <> _AwayTeamId);
+
+CREATE TABLE Results (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    _EventId INT NOT NULL UNIQUE FOREIGN KEY REFERENCES Events(Id) ON DELETE CASCADE,
+    HomeGoals TINYINT DEFAULT 0,
+    AwayGoals TINYINT DEFAULT 0,
+    _WinnerId INT FOREIGN KEY REFERENCES Teams(Id) NULL,
+    Message VARCHAR(1000) NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE PeriodScores (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    _ResultId INT NOT NULL FOREIGN KEY REFERENCES Results(Id) ON DELETE CASCADE,
+    PeriodNumber TINYINT NOT NULL,
+    HomeScore TINYINT NOT NULL,
+    AwayScore TINYINT NOT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
+
+CREATE TABLE MatchIncidents (
+    Id INT PRIMARY KEY IDENTITY(1,1),
+    _ResultId INT FOREIGN KEY REFERENCES Results(Id) NOT NULL,
+    _TeamId INT FOREIGN KEY REFERENCES Teams(Id),
+    IncidentType VARCHAR(50) NOT NULL CHECK (IncidentType IN('goal', 'yellowCard', 'secondYellowCard', 'redCard', 'instantRedCard')),
+    MatchMinute INT NULL,
+    CreatedAt DATETIME2 DEFAULT GETUTCDATE()
+);
