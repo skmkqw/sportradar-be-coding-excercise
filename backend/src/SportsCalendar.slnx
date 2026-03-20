@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="SportsCalendar.Api/SportsCalendar.Api.csproj" />
+  <Project Path="SportsCalendar.Application/SportsCalendar.Application.csproj" />
+  <Project Path="SportsCalendar.Contracts/SportsCalendar.Contracts.csproj" />
+  <Project Path="SportsCalendar.Domain/SportsCalendar.Domain.csproj" />
+  <Project Path="SportsCalendar.Infrastructure/SportsCalendar.Infrastructure.csproj" />
+</Solution>
