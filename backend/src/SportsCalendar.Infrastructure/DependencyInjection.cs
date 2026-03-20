@@ -2,6 +2,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SportsCalendar.Application.Interfaces.Repositories;
 using SportsCalendar.Infrastructure.Repositories.Events;
 
 namespace SportsCalendar.Infrastructure;
