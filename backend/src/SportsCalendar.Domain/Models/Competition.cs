@@ -10,16 +10,17 @@ public class Competition
 
     public Guid SportId { get; init; }
 
-
     public DateTime CreatedAtUtc { get; init; }
 
     public DateTime UpdatedAtUtc { get; private set; }
 
+    private Competition() { }
+
     private Competition(Guid id, string name, string slug, Guid sportId)
     {
         Id = id;
-        Name = name;
-        Slug = slug;
+        Name = name.Trim();
+        Slug = slug.Trim();
         SportId = sportId;
 
         CreatedAtUtc = DateTime.UtcNow;

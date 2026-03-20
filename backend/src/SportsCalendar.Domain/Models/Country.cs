@@ -8,10 +8,12 @@ public class Country
 
     public DateTime CreatedAtUtc { get; init; }
 
+    private Country() {}
+    
     private Country(string code, string name) 
     {
         Code = code;
-        Name = name;
+        Name = name.Trim();
 
 
         CreatedAtUtc = DateTime.UtcNow;
@@ -19,6 +21,7 @@ public class Country
 
     public static Country Create(string code, string name)
     {
+        code = code.Trim();
         if (code.Length != 3) 
             throw new ArgumentException("Country code must be 3 characters.");
 

@@ -10,10 +10,12 @@ public class Stage
 
     public DateTime CreatedAtUtc { get; init; }
 
+    private Stage() { }
+
     private Stage(Guid id, string name, int ordering)
     {
         Id = id;
-        Name = name;
+        Name = name.Trim();
         Ordering = ordering;
 
         CreatedAtUtc = DateTime.UtcNow;

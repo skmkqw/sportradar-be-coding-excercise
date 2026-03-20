@@ -10,10 +10,12 @@ public class Sport
 
     public DateTime UpdatedAtUtc { get; private set; }
 
+    private Sport() { }
+
     private Sport(Guid id, string name)
     {
         Id = id;
-        Name = name;
+        Name = name.Trim();
 
         CreatedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = DateTime.UtcNow;
