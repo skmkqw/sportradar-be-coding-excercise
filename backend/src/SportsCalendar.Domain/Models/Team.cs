@@ -37,7 +37,7 @@ public class Team
         Name = name.Trim();
         OfficialName = officialName.Trim();
         Slug = slug.Trim();
-        Abbreviation = abbreviation;
+        Abbreviation = abbreviation.Trim();
         CountryCode = countryCode;
         SportId = sportId;
         StagePosition = stagePosition;
