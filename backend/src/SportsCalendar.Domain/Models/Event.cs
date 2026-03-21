@@ -14,6 +14,10 @@ public class Event
 
     public EventStatus Status { get; private set; }
 
+    public TimeOnly TimeVenueUtc { get; private set; }
+
+    public DateOnly DateVenueUtc { get; private set; }
+
     public Guid HomeTeamId { get; init; }
 
     public Guid AwayTeamId { get; init; }
@@ -35,6 +39,8 @@ public class Event
         int season,
         Guid homeTeamId,
         Guid awayTeamId,
+        TimeOnly timeVenueUtc,
+        DateOnly dateVenueUtc,
         Guid? stadiumId,
         Guid competitionId,
         EventStatus status = EventStatus.Scheduled,
@@ -46,6 +52,8 @@ public class Event
         Description = description?.Trim();
         Season = season;
         Status = status;
+        TimeVenueUtc = timeVenueUtc;
+        DateVenueUtc = dateVenueUtc;
         HomeTeamId = homeTeamId;
         AwayTeamId = awayTeamId;
         StadiumId = stadiumId;
@@ -61,6 +69,8 @@ public class Event
         EventStatus status,
         Guid homeTeamId,
         Guid awayTeamId,
+        TimeOnly timeVenueUtc,
+        DateOnly dateVenueUtc,
         Guid? stadiumId,
         Guid competitionId,
         string? description = null,
@@ -84,7 +94,7 @@ public class Event
         if (stageId.HasValue && stageId == Guid.Empty)
             throw new ArgumentException("Stage id can't be empty.");
 
-        return new Event(Guid.NewGuid(), name, season, homeTeamId, awayTeamId, stadiumId, competitionId,
+        return new Event(Guid.NewGuid(), name, season, homeTeamId, awayTeamId, timeVenueUtc, dateVenueUtc, stadiumId, competitionId,
            status, description, stageId);
     }
 }
