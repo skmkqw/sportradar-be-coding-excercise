@@ -73,15 +73,15 @@ DECLARE @EventTennisId UNIQUEIDENTIFIER = NEWID();
 DECLARE @EventFutureId UNIQUEIDENTIFIER = NEWID();
 
 -- Played Football Match
-INSERT INTO Events (Id, Name, Season, Status, TimeVenueUTC, DateVenueUTC, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
+INSERT INTO Events (Id, Name, Season, Status, TimeVenueUtc, DateVenueUtc, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
 VALUES (@EventFootballId, 'Liverpool vs Man City', 2024, 'played', '15:00:00', '2024-03-10', @LIV, @MCI, @AnfieldId, @GroupStageId, @PremierLeagueId);
 
 -- Played Tennis Match
-INSERT INTO Events (Id, Name, Season, Status, TimeVenueUTC, DateVenueUTC, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
+INSERT INTO Events (Id, Name, Season, Status, TimeVenueUtc, DateVenueUtc, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
 VALUES (@EventTennisId, 'Nadal vs Federer', 2024, 'played', '14:00:00', '2024-07-14', @NADAL, @FEDERER, @CenterCourtId, @FinalId, @WimbledonId);
 
 -- Scheduled Future Match
-INSERT INTO Events (Id, Name, Season, Status, TimeVenueUTC, DateVenueUTC, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
+INSERT INTO Events (Id, Name, Season, Status, TimeVenueUtc, DateVenueUtc, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
 VALUES (@EventFutureId, 'Man City vs Liverpool', 2024, 'scheduled', '19:00:00', '2026-05-01', @MCI, @LIV, NULL, @GroupStageId, @PremierLeagueId);
 
 -- 9. Seed Results
