@@ -14,9 +14,58 @@ public class EventRepository : IEventRepository
 
     public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct = default)
     {
-        var sql = "SELECT * FROM Events WHERE Id = @Id";
+        const string sql = @"
+            SELECT 
+                e.*, 
+                ht.*, 
+                at.*, 
+                st.*, 
+                s.*, 
+                c.*,
+                r.* 
+            FROM Events e
+            JOIN Teams ht ON e.HomeTeamId = ht.Id
+            JOIN Teams at ON e.AwayTeamId = at.Id
+            LEFT JOIN Stadiums st ON e.StadiumId = st.Id
+            LEFT JOIN Stages s ON e.StageId = s.Id
+            JOIN Competitions c ON e.CompetitionId = c.Id
+            LEFT JOIN Results r ON r.EventId = e.Id
+            WHERE e.Id = @Id;
 
-        return await _db.QueryFirstOrDefaultWithTokenAsync<Event>(sql, new { Id = id }, ct);
+            SELECT ps.* FROM PeriodScores ps 
+            JOIN Results r ON ps.ResultId = r.Id 
+            WHERE r.EventId = @Id
+            ORDER BY ps.PeriodNumber, ps.CreatedAtUtc;
+            
+            SELECT mi.* FROM MatchIncidents mi 
+            JOIN Results r ON mi.ResultId = r.Id 
+            WHERE r.EventId = @Id
+            ORDER BY mi.MatchMinute;";
+
+        await using var multi = await _db.QueryMultipleAsync(new CommandDefinition(sql, new { Id = id }, cancellationToken: ct));
+
+        var eventEntity = multi.Read<Event, Team, Team, Stadium, Stage, Competition, Result, Event>(
+            (ev, ht, at, st, s, cp, res) =>
+            {
+                ev.HomeTeam = ht; 
+                ev.AwayTeam = at; 
+                ev.Stadium = st;
+                ev.Stage = s; 
+                ev.Competition = cp; 
+                ev.Result = res;
+                return ev;
+            }, splitOn: "Id,Id,Id,Id,Id,Id").FirstOrDefault();
+
+        if (eventEntity?.Result != null)
+        {
+            var scores = await multi.ReadAsync<PeriodScore>();
+            var incidents = await multi.ReadAsync<MatchIncident>();
+
+            eventEntity.Result.PeriodScores.AddRange(scores);
+            eventEntity.Result.MatchIncidents.AddRange(incidents);
+        }
+
+        return eventEntity;
     }
 
     public async Task<IEnumerable<Event>> GetAllAsync(int page = 1,
