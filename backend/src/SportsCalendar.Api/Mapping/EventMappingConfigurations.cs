@@ -13,6 +13,7 @@ public class TeamMappingConfigurations : IRegister
             .Map(dest => dest.Id, src => src);
 
         config.NewConfig<Event, GetEventResponse>()
+            .Map(dest => dest.Status, src => src.Status.ToString().ToLower())
             .Map(dest => dest.DateVenueUtc, src => DateOnly.FromDateTime(src.DateVenueUtc));
     }
 }

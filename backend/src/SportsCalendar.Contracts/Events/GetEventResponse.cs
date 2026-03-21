@@ -5,7 +5,7 @@ public record GetEventResponse(
     string Name,
     string? Description,
     int Season,
-    int Status,
+    string Status,
     TimeSpan TimeVenueUtc,
     DateOnly DateVenueUtc,
     Guid HomeTeamId,
