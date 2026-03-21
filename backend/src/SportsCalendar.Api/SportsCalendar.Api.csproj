@@ -7,12 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mapster" Version="10.0.3" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SportsCalendar.Application\SportsCalendar.Application.csproj" />
     <ProjectReference Include="..\SportsCalendar.Infrastructure\SportsCalendar.Infrastructure.csproj" />
+    <ProjectReference Include="..\SportsCalendar.Contracts\SportsCalendar.Contracts.csproj" />
   </ItemGroup>
 
 </Project>
