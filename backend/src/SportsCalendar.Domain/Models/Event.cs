@@ -14,9 +14,9 @@ public class Event
 
     public EventStatus Status { get; private set; }
 
-    public TimeOnly TimeVenueUtc { get; private set; }
+    public TimeSpan TimeVenueUtc { get; private set; }
 
-    public DateOnly DateVenueUtc { get; private set; }
+    public DateTime DateVenueUtc { get; private set; }
 
     public Guid HomeTeamId { get; init; }
 
@@ -39,8 +39,8 @@ public class Event
         int season,
         Guid homeTeamId,
         Guid awayTeamId,
-        TimeOnly timeVenueUtc,
-        DateOnly dateVenueUtc,
+        TimeSpan timeVenueUtc,
+        DateTime dateVenueUtc,
         Guid? stadiumId,
         Guid competitionId,
         EventStatus status = EventStatus.Scheduled,
@@ -69,8 +69,8 @@ public class Event
         EventStatus status,
         Guid homeTeamId,
         Guid awayTeamId,
-        TimeOnly timeVenueUtc,
-        DateOnly dateVenueUtc,
+        TimeSpan timeVenueUtc,
+        DateTime dateVenueUtc,
         Guid? stadiumId,
         Guid competitionId,
         string? description = null,
