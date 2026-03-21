@@ -15,5 +15,12 @@ public class TeamMappingConfigurations : IRegister
         config.NewConfig<Event, GetEventResponse>()
             .Map(dest => dest.Status, src => src.Status.ToString().ToLower())
             .Map(dest => dest.DateVenueUtc, src => DateOnly.FromDateTime(src.DateVenueUtc));
+
+        config.NewConfig<MatchIncident, MatchIncidentResponse>()
+            .Map(dest => dest.Type, src => src.Type.ToString().ToLower());
+
+        config.NewConfig<Event, GetFullEventResponse>()
+            .Map(dest => dest.Status, src => src.Status.ToString().ToLower())
+            .Map(dest => dest.DateVenueUtc, src => DateOnly.FromDateTime(src.DateVenueUtc));
     }
 }
