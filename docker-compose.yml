@@ -1,0 +1,29 @@
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sports-calendar-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Comp.Password987
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+      - ./database/init-db.sql:/usr/config/init-db.sql
+
+  backend:
+    image: sports-calendar-api
+    container_name: sports-calendar-api
+    build:
+      context: ./backend/src
+      dockerfile: SportsCalendar.Api/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=SportsCalendar;User Id=sa;Password=Comp.Password987;TrustServerCertificate=True;
+    ports:
+      - "5000:8080"
+    depends_on:
+      - sqlserver
+
+volumes:
+  mssql-data:
