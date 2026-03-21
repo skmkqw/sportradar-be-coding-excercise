@@ -28,7 +28,7 @@ public class EventsController : BaseController
 
         return getEventQueryResult.Match(
             onError: errors => Problem(errors),
-            onValue: _ => Ok(_mapper.Map<GetEventResponse>(getEventQueryResult.Value))
+            onValue: _ => Ok(_mapper.Map<GetFullEventResponse>(getEventQueryResult.Value))
         );
     }
 }
