@@ -2,6 +2,7 @@ using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using SportsCalendar.Application.Events.Queries.GetEventById;
+using SportsCalendar.Application.Events.Queries.GetEvents;
 using SportsCalendar.Contracts.Events;
 
 namespace SportsCalendar.Api.Controllers;
@@ -18,6 +19,15 @@ public class EventsController : BaseController
     {
         _mapper = mapper;
         _mediator = mediator;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetEvents([FromQuery] GetEventsRequest request)
+    {
+        var query = _mapper.Map<GetEventsQuery>(request);
+        var getEventsResult = await _mediator.Send(query);
+
+        return Ok(_mapper.Map<GetEventsResponse>(getEventsResult));
     }
 
     [HttpGet("{eventId:guid}")]

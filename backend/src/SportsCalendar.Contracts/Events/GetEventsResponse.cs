@@ -14,4 +14,12 @@ public record GetEventResponse(
     Guid? StageId,
     Guid CompetitionId,
     DateTime CreatedAtUtc,
-    DateTime UpdatedAtUtc);
+    DateTime UpdatedAtUtc
+);
+
+public record GetEventsMetadata(int Page, int PageSize, int Total);
+
+public record GetEventsResponse(
+    List<GetEventResponse> Events,
+    GetEventsMetadata Metadata
+);
