@@ -1,4 +1,5 @@
 using System.Data;
+using DotNetEnv;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        Env.Load("../../../");
+
+        var connectionString = Environment.GetEnvironmentVariable("CONNECTION_STRING")?.Trim();
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+            throw new ApplicationException("Missing connection sting.");
 
         services.AddScoped<IDbConnection>(_ => new SqlConnection(connectionString));
 
