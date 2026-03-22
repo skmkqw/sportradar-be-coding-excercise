@@ -1,8 +1,8 @@
 using System.Data;
 using Dapper;
+using SportsCalendar.Application.Common;
 using SportsCalendar.Application.Interfaces.Repositories;
 using SportsCalendar.Domain.Models;
-using SportsCalendar.Infrastructure.Extensions;
 
 namespace SportsCalendar.Infrastructure.Repositories.Events;
 
@@ -68,30 +68,50 @@ public class EventRepository : IEventRepository
         return eventEntity;
     }
 
-    public async Task<IEnumerable<Event>> GetAllAsync(int page = 1,
-        int pageSize = 10,
-        string? sportSlug = null,
-        DateTime? date = null,
-        CancellationToken ct = default)
+    public async Task<PagedResult<Event>> GetEventsAsync(int page,
+        int pageSize,
+        Guid? sportId,
+        DateOnly? start,
+        DateOnly? end,
+        CancellationToken ct)
     {
-        int offset = pageSize * (page - 1);
+        int offset = (page - 1) * pageSize;
+
         var sql = @"
-            SELECT e.*
+            DECLARE @Filtered TABLE (Id UNIQUEIDENTIFIER);
+
+            INSERT INTO @Filtered (Id)
+            SELECT e.Id
             FROM Events e
             INNER JOIN Competitions c ON e.CompetitionId = c.Id 
             INNER JOIN Sports sp ON c.SportId = sp.Id
-            WHERE (@SportSlug IS NULL OR sp.Slug = @SportSlug)
-            AND (@Date IS NULL OR e.DateVenueUTC = @Date)
-            ORDER BY e.DateVenueUTC, e.TimeVenueUTC 
-            OFFSET @Offset FETCH @PageSize ROWS ONLY";
+            WHERE (@SportId IS NULL OR sp.Id = @SportId)
+            AND (@Start IS NULL OR e.DateVenueUTC >= @Start)
+            AND (@End IS NULL OR e.DateVenueUTC <= @End);
 
-        return await _db.QueryWithTokenAsync<Event>(sql, new
-        {
-            Offset = offset,
-            PageSize = pageSize,
-            SportSlug = sportSlug,
-            Date = date
-        }, ct);
+            SELECT COUNT(*) FROM @Filtered;
+
+            SELECT e.*
+            FROM Events e
+            INNER JOIN @Filtered f ON e.Id = f.Id
+            ORDER BY e.DateVenueUTC, e.TimeVenueUTC 
+            OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY;";
+
+        using var multi = await _db.QueryMultipleAsync(new CommandDefinition(sql,
+            new
+            {
+                SportId = sportId,
+                Start = start,
+                End = end,
+                Offset = offset,
+                PageSize = pageSize
+            },
+            cancellationToken: ct));
+
+        var total = await multi.ReadFirstAsync<int>();
+        var events = (await multi.ReadAsync<Event>()).ToList();
+
+        return PagedResult<Event>.Create(events, page, pageSize, total);
     }
 
     public async Task<Guid> AddAsync(Event @event, CancellationToken ct = default)
