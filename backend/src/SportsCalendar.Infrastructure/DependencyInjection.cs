@@ -2,7 +2,6 @@ using System.Data;
 using Dapper;
 using DotNetEnv;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using SportsCalendar.Application.Interfaces;
@@ -39,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<IStadiumRepository, StadiumRepository>();
         services.AddScoped<IStageRepository, StageRepository>();
         services.AddScoped<ITeamRepository, TeamRepository>();
+        services.AddScoped<ISportRepository, SportRepository>();
 
         // Healthcheks
         services

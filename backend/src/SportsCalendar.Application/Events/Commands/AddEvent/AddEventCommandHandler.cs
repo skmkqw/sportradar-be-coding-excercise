@@ -22,6 +22,8 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
 
     private readonly ICompetitionRepository _competitionRepository;
 
+    private readonly ISportRepository _sportRepository;
+
     private readonly IResultRepository _resultRepository;
 
     private readonly ILogger<AddEventCommandHandler> _logger;
@@ -33,6 +35,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
         IStadiumRepository stadiumRepository,
         IStageRepository stageRepository,
         ICompetitionRepository competitionRepository,
+        ISportRepository sportRepository,
         IResultRepository resultRepository, 
         ILogger<AddEventCommandHandler> logger)
     {
@@ -42,55 +45,99 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
         _stadiumRepository = stadiumRepository;
         _stageRepository = stageRepository;
         _competitionRepository = competitionRepository;
+        _sportRepository = sportRepository;
         _resultRepository = resultRepository;
         _logger = logger;
     }
 
     public async Task<ErrorOr<Event>> Handle(AddEventCommand request, CancellationToken ct)
     {
-        _unitOfWork.Begin();
-        try
+        // Resolve Competition
+        var resolveCompetitionResult = await ResolveCompetition(request, ct);
+
+        if (resolveCompetitionResult.IsError)
+            return resolveCompetitionResult.Errors;
+
+        Competition competition = resolveCompetitionResult.Value.Entity;
+
+        var targetSportId = competition.SportId;
+
+        // Ensure a Sport with target SportId exists
+        if (resolveCompetitionResult.Value.IsNew)
         {
-            // TODO: Verify that the same SportId was provided in each model
-            // Home Team
-            var resolveHomeTeamResult = await ResolveTeam(request, TeamSide.Home, ct);
+            var targetSport = await _sportRepository.GetByIdAsync(targetSportId, null, ct);
+            if (targetSport == null)
+                return Error.Validation(
+                    code: "Sport.NotFound",
+                    description: $"Sport with ID {targetSportId} does not exist."
+                );
+        }
 
-            if (resolveHomeTeamResult.IsError)
-                return resolveHomeTeamResult.Errors;
-            
-            Team homeTeam = resolveHomeTeamResult.Value;
+        // Resolve Home Team
+        var resolveHomeTeamResult = await ResolveTeam(request, TeamSide.Home, ct);
 
-            // Away Team
-            var resolveAwayTeamResult = await ResolveTeam(request, TeamSide.Away, ct);
+        if (resolveHomeTeamResult.IsError)
+            return resolveHomeTeamResult.Errors;
 
-            if (resolveAwayTeamResult.IsError)
-                return resolveAwayTeamResult.Errors;
+        Team homeTeam = resolveHomeTeamResult.Value.Entity;
 
-            Team awayTeam = resolveAwayTeamResult.Value;
+        // Validate SportId match
+        if (homeTeam.SportId != targetSportId)
+            return Error.Validation(
+                code: "HomeTeam.SportMismatch",
+                description: "Home team sport does not match competition sport."
+            );
 
-            // Competition
-            var resolveCompetitionResult = await ResolveCompetition(request, ct);
+        // Resolve Away Team
+        var resolveAwayTeamResult = await ResolveTeam(request, TeamSide.Away, ct);
 
-            if (resolveCompetitionResult.IsError)
-                return resolveCompetitionResult.Errors;
+        if (resolveAwayTeamResult.IsError)
+            return resolveAwayTeamResult.Errors;
 
-            Competition competition = resolveCompetitionResult.Value;
+        Team awayTeam = resolveAwayTeamResult.Value.Entity;
 
-            // Stadium
+        // Validate SportId match
+        if (awayTeam.SportId != targetSportId)
+            return Error.Validation(
+                code: "AwayTeam.SportMismatch",
+                description: "Away team sport does not match competition sport."
+            );
+        
+        _unitOfWork.Begin();
+
+        try
+        {   
+            // Create Competition and Teams if new
+            if (resolveCompetitionResult.Value.IsNew)
+                await _competitionRepository.AddAsync(competition, _unitOfWork.Transaction, ct);
+
+            if (resolveHomeTeamResult.Value.IsNew)
+                await _teamRepository.AddAsync(homeTeam, _unitOfWork.Transaction, ct);
+
+            if (resolveAwayTeamResult.Value.IsNew)
+                await _teamRepository.AddAsync(awayTeam, _unitOfWork.Transaction, ct);
+
+            // Resolve Stadium
             var resolveStadiumResult = await ResolveStadium(request, ct);
 
             if (resolveStadiumResult.IsError)
                 return resolveStadiumResult.Errors;
 
-            Stadium? stadium = resolveStadiumResult.Value;
+            Stadium? stadium = resolveStadiumResult.Value.Entity;
 
+            if (resolveStadiumResult.Value is { IsNew: true, Entity: not null })
+                await _stadiumRepository.AddAsync(stadium, _unitOfWork.Transaction, ct);
+            
             // Create new Stage if exists in request
             var resolveStageResult = await ResolveStage(request, ct);
 
             if (resolveStageResult.IsError)
                 return resolveStageResult.Errors;
 
-            Stage? stage = resolveStageResult.Value;
+            Stage? stage = resolveStageResult.Value.Entity;
+
+            if (resolveStageResult.Value is { IsNew: true, Entity: not null })
+                await _stageRepository.AddAsync(stage, _unitOfWork.Transaction, ct);
 
             // Create the Event
             var @event = Event.Create(
@@ -186,7 +233,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
 
     
     // Creates new HomeTeam/AwayTeam if exists in request
-    private async Task<ErrorOr<Team>> ResolveTeam(AddEventCommand request, TeamSide side, CancellationToken ct)
+    private async Task<ErrorOr<ResolutionResult<Team>>> ResolveTeam(AddEventCommand request, TeamSide side, CancellationToken ct)
     {
         var existingTeamId = side == TeamSide.Home 
             ? request.ExistingHomeTeamId 
@@ -199,7 +246,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 ? Error.NotFound(
                     code: $"{(side == TeamSide.Home ? "HomeTeam" : "AwayTeam")}.NotFound", 
                     description: $"Team with ID '{existingTeamId}' not found or doesn't exist.")
-                : team;
+                : new ResolutionResult<Team>(team, false);
         }
 
         var newTeamData = side == TeamSide.Home
@@ -217,9 +264,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 stagePosition: newTeamData.StagePosition
             );
             
-            await _teamRepository.AddAsync(team, _unitOfWork.Transaction, ct);
-            
-            return team;
+            return new ResolutionResult<Team>(team, true);
         }
 
         return Error.Validation(
@@ -229,14 +274,14 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
 
     
     // Creates new Competition if exists in request
-    private async Task<ErrorOr<Competition>> ResolveCompetition(AddEventCommand request, CancellationToken ct)
+    private async Task<ErrorOr<ResolutionResult<Competition>>> ResolveCompetition(AddEventCommand request, CancellationToken ct)
     {
         if (request.ExistingCompetitionId.HasValue)
         {
             var competition = await _competitionRepository.GetByIdAsync(request.ExistingCompetitionId.Value, _unitOfWork.Transaction, ct);
             return competition == null 
                 ? Error.NotFound("Competition.NotFound", "Competition not found or doesn't exist.")
-                : competition;
+                : new ResolutionResult<Competition>(competition, false);
         }
 
         if (request.NewCompetition != null)
@@ -246,9 +291,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 sportId: request.NewCompetition.SportId
             );
 
-            await _competitionRepository.AddAsync(competition, _unitOfWork.Transaction, ct);
-
-            return competition;
+            return new ResolutionResult<Competition>(competition, true);
         }
 
         return Error.Validation("Competition.Required", "Competition data is missing.");
@@ -256,14 +299,14 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
 
     
     // Creates new Stadium if exists in request
-    private async Task<ErrorOr<Stadium>> ResolveStadium(AddEventCommand request, CancellationToken ct)
+    private async Task<ErrorOr<ResolutionResult<Stadium>>> ResolveStadium(AddEventCommand request, CancellationToken ct)
     {
         if (request.ExistingStadiumId.HasValue)
         {
             var stadium = await _stadiumRepository.GetByIdAsync(request.ExistingStadiumId.Value, _unitOfWork.Transaction, ct);
             return stadium == null
                 ? Error.NotFound("Stadium.NotFound", "Stadium not found or doesn't exist.")
-                : stadium;
+                : new ResolutionResult<Stadium>(stadium, false);
         }
 
         if (request.NewStadium != null)
@@ -273,24 +316,22 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 countryCode: request.NewStadium.CountryCode
             );
             
-            await _stadiumRepository.AddAsync(stadium, _unitOfWork.Transaction, ct);
-
-            return stadium;
+            return new ResolutionResult<Stadium>(stadium, true);
         }
 
-        return (Stadium)null!;
+        return new ResolutionResult<Stadium>(null!, false);
     }
 
     
     // Creates new Stage if exists in request
-    private async Task<ErrorOr<Stage>> ResolveStage(AddEventCommand request, CancellationToken ct)
+    private async Task<ErrorOr<ResolutionResult<Stage>>> ResolveStage(AddEventCommand request, CancellationToken ct)
     {
         if (request.ExistingStageId.HasValue)
         {
             var stage = await _stageRepository.GetByIdAsync(request.ExistingStageId.Value, _unitOfWork.Transaction, ct);
             return stage == null
                 ? Error.NotFound("Stage.NotFound", "Stage not found or doesn't exist.")
-                : stage;
+                : new ResolutionResult<Stage>(stage, false);
         }
 
         if (request.NewStage != null)
@@ -300,11 +341,11 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 ordering: request.NewStage.Ordering
             );
 
-            await _stageRepository.AddAsync(stage, _unitOfWork.Transaction!, ct);
-
-            return stage;
+            return new ResolutionResult<Stage>(stage, true);
         }
 
-        return (Stage)null!;
+        return new ResolutionResult<Stage>(null!, false);
     }
+
+    private record ResolutionResult<T>(T Entity, bool IsNew);
 }
