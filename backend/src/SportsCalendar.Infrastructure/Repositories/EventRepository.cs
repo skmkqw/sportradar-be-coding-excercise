@@ -3,8 +3,9 @@ using Dapper;
 using SportsCalendar.Application.Common;
 using SportsCalendar.Application.Interfaces.Repositories;
 using SportsCalendar.Domain.Models;
+using SportsCalendar.Infrastructure.Extensions;
 
-namespace SportsCalendar.Infrastructure.Repositories.Events;
+namespace SportsCalendar.Infrastructure.Repositories;
 
 public class EventRepository : IEventRepository
 {
@@ -114,13 +115,39 @@ public class EventRepository : IEventRepository
         return PagedResult<Event>.Create(events, page, pageSize, total);
     }
 
-    public async Task<Guid> AddAsync(Event @event, CancellationToken ct = default)
+    public async Task<Guid> AddAsync(Event @event, IDbTransaction transaction, CancellationToken ct = default)
     {
         const string sql = @"
-            INSERT INTO Events (Id, Name, Description, Season, Status, TimeVenueUTC, DateVenueUTC, GroupName, HomeTeamId, AwayTeamId, StadiumId, StageId, CompetitionId)
-            VALUES (@Id, @Name, @Description, @Season, @Status, @TimeVenueUTC, @DateVenueUTC, @GroupName, @HomeTeamId, @AwayTeamId, @StadiumId, @StageId, @CompetitionId)";
+            INSERT INTO Events (
+                Id, Name, Description, Season, Status, 
+                TimeVenueUTC, DateVenueUTC, HomeTeamId, 
+                AwayTeamId, StadiumId, StageId, CompetitionId
+            )
+            VALUES (
+                @Id, @Name, @Description, @Season, @Status, 
+                @TimeVenueUtc, @DateVenueUtc, @HomeTeamId, 
+                @AwayTeamId, @StadiumId, @StageId, @CompetitionId
+            )";
 
-        await _db.ExecuteAsync(sql, @event);
+        var parameters = new
+        {
+            @event.Id,
+            @event.Name,
+            @event.Description,
+            @event.Season,
+            Status = @event.Status.ToString().ToLower(),
+            @event.TimeVenueUtc,
+            @event.DateVenueUtc,
+            @event.HomeTeamId,
+            @event.AwayTeamId,
+            @event.StadiumId,
+            @event.StageId,
+            @event.CompetitionId,
+            @event.ResultId
+        };
+
+        await _db.ExecuteWithTokenAsync(sql, parameters, transaction, ct);
+
         return @event.Id;
     }
 }
