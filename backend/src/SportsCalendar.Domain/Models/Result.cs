@@ -18,6 +18,8 @@ public class Result
 
     public string? Message { get; private set; }
 
+    public Guid EventId { get; init; }
+
     public DateTime CreatedAtUtc { get; init; }
 
     public DateTime UpdatedAtUtc { get; private set; }
@@ -27,6 +29,7 @@ public class Result
     private Result(Guid id,
         List<PeriodScore>? periodScores,
         List<MatchIncident>? matchIncidents,
+        Guid eventId,
         Guid? winnerId = null,
         string? message = null)
     {
@@ -35,6 +38,7 @@ public class Result
         MatchIncidents = matchIncidents ?? new List<MatchIncident>();
         WinnerId = winnerId;
         Message = message?.Trim();
+        EventId = eventId;
 
         CreatedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = DateTime.UtcNow;
@@ -42,22 +46,36 @@ public class Result
 
     public static Result Create(List<PeriodScore> periodScores,
         List<MatchIncident>? matchIncidents,
+        Guid eventId,
         Guid? winnerId = null,
         string? message = null)
     {        
         if (winnerId == Guid.Empty)
             throw new ArgumentException("Winner id can't be empty.");
 
-        return new Result(Guid.NewGuid(), periodScores, matchIncidents, winnerId, message);
+        if (eventId == Guid.Empty)
+            throw new ArgumentException("Event id can't be empty.");
+
+        return new Result(Guid.NewGuid(), periodScores, matchIncidents, eventId, winnerId, message);
     }
 
     public void AddScore(int home, int away)
     {
-        PeriodScores.Add(PeriodScore.Create(PeriodScores.Count + 1, home, away));
+        PeriodScores.Add(PeriodScore.Create(PeriodScores.Count + 1, home, away, Id));
     }
 
+    public void AddScores(List<PeriodScore> scores)
+    {
+        PeriodScores.AddRange(scores);
+    }
+    
     public void AddIncident(Guid teamId, IncidentType type, int matchMinute)
     {
-        MatchIncidents.Add(MatchIncident.Create(teamId, type, matchMinute));
+        MatchIncidents.Add(MatchIncident.Create(teamId, type, matchMinute, Id));
+    }
+
+    public void AddIncidents(List<MatchIncident> incidents)
+    {
+        MatchIncidents.AddRange(incidents);
     }
 }

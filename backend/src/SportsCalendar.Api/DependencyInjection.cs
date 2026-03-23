@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Text.Json.Serialization;
 using Mapster;
 using MapsterMapper;
 
@@ -8,7 +9,12 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddPresentation(this IServiceCollection services)
     {
-        services.AddControllers();
+        services
+            .AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
         services.AddMappers();
         services.AddSignalR();
 

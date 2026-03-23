@@ -1,3 +1,4 @@
+using System.Data;
 using SportsCalendar.Application.Common;
 using SportsCalendar.Domain.Models;
 
@@ -14,5 +15,5 @@ public interface IEventRepository
         DateOnly? endDate = null,
         CancellationToken ct = default);
 
-    Task<Guid> AddAsync(Event @event, CancellationToken ct = default);
+    Task<Guid> AddAsync(Event @event, IDbTransaction transaction, CancellationToken ct = default);
 }

@@ -27,4 +27,22 @@ public static class DapperExtensions
     {
         return db.QueryAsync<T>(new CommandDefinition(sql, parameters, cancellationToken: ct));
     }
+
+    public static Task ExecuteWithTokenAsync<T>(this IDbConnection db,
+        string sql,
+        T data,
+        IDbTransaction? transaction,
+        CancellationToken ct = default)
+    {
+        return db.ExecuteAsync(new CommandDefinition(sql, data, transaction, cancellationToken: ct));
+    }
+
+    public static Task ExecuteWithTokenAsync<T>(this IDbConnection db,
+        string sql,
+        IEnumerable<T> data,
+        IDbTransaction? transaction,
+        CancellationToken ct = default)
+    {
+        return db.ExecuteAsync(new CommandDefinition(sql, data, transaction, cancellationToken: ct));
+    }
 }

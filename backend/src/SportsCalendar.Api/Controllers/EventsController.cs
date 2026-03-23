@@ -1,6 +1,7 @@
 using MapsterMapper;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using SportsCalendar.Application.Events.Commands.AddEvent;
 using SportsCalendar.Application.Events.Queries.GetEventById;
 using SportsCalendar.Application.Events.Queries.GetEvents;
 using SportsCalendar.Contracts.Events;
@@ -41,4 +42,19 @@ public class EventsController : BaseController
             onValue: _ => Ok(_mapper.Map<GetFullEventResponse>(getEventQueryResult.Value))
         );
     }
+
+    [HttpPost]
+    public async Task<IActionResult> AddEvent([FromBody] CreateEventRequest request)
+    {
+        var command = _mapper.Map<AddEventCommand>(request);
+        var createEventResult = await _mediator.Send(command);
+
+        return createEventResult.Match(
+    value => CreatedAtAction(
+                actionName: nameof(GetEventById),
+                routeValues: new { eventId = value.Id },
+                value: _mapper.Map<GetFullEventResponse>(value)),
+            errors => Problem(errors)
+            );
+        }
 }
