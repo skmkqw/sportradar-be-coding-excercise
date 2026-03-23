@@ -1,1 +1,0 @@
-Sportradar Backend Coding Excerciese
