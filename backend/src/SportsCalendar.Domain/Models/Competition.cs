@@ -16,28 +16,30 @@ public class Competition
 
     private Competition() { }
 
-    private Competition(Guid id, string name, string slug, Guid sportId)
+    private Competition(Guid id, string name, Guid sportId)
     {
         Id = id;
         Name = name.Trim();
-        Slug = slug.Trim();
+        Slug = GenerateSlug(Name);
         SportId = sportId;
 
         CreatedAtUtc = DateTime.UtcNow;
         UpdatedAtUtc = DateTime.UtcNow;
     }
 
-    public static Competition Create(string name, string slug, Guid sportId)
+    public static Competition Create(string name, Guid sportId)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Competition name is required.");
 
-        if (string.IsNullOrWhiteSpace(slug))
-            throw new ArgumentException("Competition slug is required.");
-
         if (sportId == Guid.Empty)
             throw new ArgumentException("Sport id can't be empty");
 
-        return new Competition(Guid.NewGuid(), name, slug, sportId);
+        return new Competition(Guid.NewGuid(), name, sportId);
     }
-}
+
+    private static string GenerateSlug(string name)
+        => name
+            .Replace(' ', '_')
+            .ToLower();
+    }

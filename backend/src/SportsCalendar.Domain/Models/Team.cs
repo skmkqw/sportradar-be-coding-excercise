@@ -27,7 +27,6 @@ public class Team
     private Team(Guid id,
         string name,
         string officialName,
-        string slug,
         string abbreviation,
         string countryCode,
         Guid sportId,
@@ -36,7 +35,7 @@ public class Team
         Id = id;
         Name = name.Trim();
         OfficialName = officialName.Trim();
-        Slug = slug.Trim();
+        Slug = GenerateSlug(Name);
         Abbreviation = abbreviation.Trim();
         CountryCode = countryCode;
         SportId = sportId;
@@ -49,7 +48,6 @@ public class Team
 
     public static Team Create(string name,
         string officialName,
-        string slug,
         string abbreviation,
         string countryCode,
         Guid sportId,
@@ -64,9 +62,6 @@ public class Team
         if (string.IsNullOrWhiteSpace(officialName))
             throw new ArgumentException("Team official name is required.");
 
-        if (string.IsNullOrWhiteSpace(slug))
-            throw new ArgumentException("Team slug is required.");
-
         if (string.IsNullOrWhiteSpace(abbreviation))
             throw new ArgumentException("Team abbreviation is required.");
 
@@ -80,11 +75,15 @@ public class Team
         return new Team(Guid.NewGuid(),
             name,
             officialName,
-            slug,
             abbreviation,
             countryCode,
             sportId,
             stagePosition
         );
     }
+
+    private static string GenerateSlug(string name) 
+        => name
+            .Replace(' ', '_')
+            .ToLower();
 }
