@@ -5,7 +5,7 @@ namespace SportsCalendar.Application.Interfaces.Repositories;
 
 public interface IStadiumRepository
 {
-    Task<Stadium?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<Stadium?> GetByIdAsync(Guid id, IDbTransaction? transaction, CancellationToken ct = default);
 
-    Task AddAsync(Stadium stadium, IDbTransaction transaction, CancellationToken ct = default);
+    Task AddAsync(Stadium stadium, IDbTransaction? transaction, CancellationToken ct = default);
 }

@@ -14,10 +14,10 @@ public class ResultRepository : IResultRepository
         _dbConnection = dbConnection;
     }
 
-    public async Task<Result?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Result?> GetByIdAsync(Guid id, IDbTransaction? transaction, CancellationToken ct = default)
     {
         const string sql = "SELECT * FROM Results WHERE Id = @Id";
-        return await _dbConnection.QueryFirstOrDefaultWithTokenAsync<Result>(sql, new { Id = id }, ct);
+        return await _dbConnection.QueryFirstOrDefaultWithTokenAsync<Result>(sql, transaction, new { Id = id }, ct);
     }
 
     public async Task AddAsync(Result result, IDbTransaction? transaction, CancellationToken ct = default)

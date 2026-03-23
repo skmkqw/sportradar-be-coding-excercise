@@ -108,7 +108,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 resultId: null
             );
 
-            await _eventRepository.AddAsync(@event, _unitOfWork.Transaction!, ct);
+            await _eventRepository.AddAsync(@event, _unitOfWork.Transaction, ct);
 
             // Create new Result if exists in request
             if (request.Result != null)
@@ -158,7 +158,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 result.AddScores(periodScores);
                 result.AddIncidents(matchIncidents);
 
-                await _resultRepository.AddAsync(result, _unitOfWork.Transaction!, ct);
+                await _resultRepository.AddAsync(result, _unitOfWork.Transaction, ct);
 
                 @event.Result = result;
             }
@@ -194,7 +194,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
         
         if (existingTeamId.HasValue)
         {
-            var team = await _teamRepository.GetByIdAsync(existingTeamId.Value);
+            var team = await _teamRepository.GetByIdAsync(existingTeamId.Value, _unitOfWork.Transaction, ct);
             return team == null 
                 ? Error.NotFound(
                     code: $"{(side == TeamSide.Home ? "HomeTeam" : "AwayTeam")}.NotFound", 
@@ -217,7 +217,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 stagePosition: newTeamData.StagePosition
             );
             
-            await _teamRepository.AddAsync(team, _unitOfWork.Transaction!, ct);
+            await _teamRepository.AddAsync(team, _unitOfWork.Transaction, ct);
             
             return team;
         }
@@ -233,7 +233,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
     {
         if (request.ExistingCompetitionId.HasValue)
         {
-            var competition = await _competitionRepository.GetByIdAsync(request.ExistingCompetitionId.Value);
+            var competition = await _competitionRepository.GetByIdAsync(request.ExistingCompetitionId.Value, _unitOfWork.Transaction, ct);
             return competition == null 
                 ? Error.NotFound("Competition.NotFound", "Competition not found or doesn't exist.")
                 : competition;
@@ -246,7 +246,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 sportId: request.NewCompetition.SportId
             );
 
-            await _competitionRepository.AddAsync(competition, _unitOfWork.Transaction!, ct);
+            await _competitionRepository.AddAsync(competition, _unitOfWork.Transaction, ct);
 
             return competition;
         }
@@ -260,7 +260,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
     {
         if (request.ExistingStadiumId.HasValue)
         {
-            var stadium = await _stadiumRepository.GetByIdAsync(request.ExistingStadiumId.Value);
+            var stadium = await _stadiumRepository.GetByIdAsync(request.ExistingStadiumId.Value, _unitOfWork.Transaction, ct);
             return stadium == null
                 ? Error.NotFound("Stadium.NotFound", "Stadium not found or doesn't exist.")
                 : stadium;
@@ -273,7 +273,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
                 countryCode: request.NewStadium.CountryCode
             );
             
-            await _stadiumRepository.AddAsync(stadium, _unitOfWork.Transaction!, ct);
+            await _stadiumRepository.AddAsync(stadium, _unitOfWork.Transaction, ct);
 
             return stadium;
         }
@@ -287,7 +287,7 @@ public class AddEventCommandHandler : IRequestHandler<AddEventCommand, ErrorOr<E
     {
         if (request.ExistingStageId.HasValue)
         {
-            var stage = await _stageRepository.GetByIdAsync(request.ExistingStageId.Value);
+            var stage = await _stageRepository.GetByIdAsync(request.ExistingStageId.Value, _unitOfWork.Transaction, ct);
             return stage == null
                 ? Error.NotFound("Stage.NotFound", "Stage not found or doesn't exist.")
                 : stage;

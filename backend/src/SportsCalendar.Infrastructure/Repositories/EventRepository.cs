@@ -13,7 +13,7 @@ public class EventRepository : IEventRepository
 
     public EventRepository(IDbConnection db) => _db = db;
 
-    public async Task<Event?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Event?> GetByIdAsync(Guid id, IDbTransaction? transaction = null, CancellationToken ct = default)
     {
         const string sql = @"
             SELECT 
@@ -43,7 +43,8 @@ public class EventRepository : IEventRepository
             WHERE r.EventId = @Id
             ORDER BY mi.MatchMinute;";
 
-        await using var multi = await _db.QueryMultipleAsync(new CommandDefinition(sql, new { Id = id }, cancellationToken: ct));
+        await using var multi = await _db.QueryMultipleAsync(
+            new CommandDefinition(sql, new { Id = id }, transaction, cancellationToken: ct));
 
         var eventEntity = multi.Read<Event, Team, Team, Stadium, Stage, Competition, Result, Event>(
             (ev, ht, at, st, s, cp, res) =>
@@ -115,7 +116,7 @@ public class EventRepository : IEventRepository
         return PagedResult<Event>.Create(events, page, pageSize, total);
     }
 
-    public async Task<Guid> AddAsync(Event @event, IDbTransaction transaction, CancellationToken ct = default)
+    public async Task<Guid> AddAsync(Event @event, IDbTransaction? transaction, CancellationToken ct = default)
     {
         const string sql = @"
             INSERT INTO Events (

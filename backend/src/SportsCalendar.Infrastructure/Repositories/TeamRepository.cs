@@ -14,14 +14,14 @@ public class TeamRepository : ITeamRepository
         _dbConnection = dbConnection;
     }
 
-    public async Task<Team?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Team?> GetByIdAsync(Guid id, IDbTransaction? transaction, CancellationToken ct = default)
     {
         const string sql = "SELECT * FROM Teams WHERE Id = @Id";
 
-        return await _dbConnection.QueryFirstOrDefaultWithTokenAsync<Team>(sql, new { Id = id }, ct);
+        return await _dbConnection.QueryFirstOrDefaultWithTokenAsync<Team>(sql, transaction, new { Id = id }, ct);
     }
 
-    public async Task AddAsync(Team team, IDbTransaction transaction, CancellationToken ct = default)
+    public async Task AddAsync(Team team, IDbTransaction? transaction, CancellationToken ct = default)
     {
         const string sql = @"
             INSERT INTO Teams (Id, Name, OfficialName, Slug, Abbreviation, CountryCode, SportId, StagePosition)

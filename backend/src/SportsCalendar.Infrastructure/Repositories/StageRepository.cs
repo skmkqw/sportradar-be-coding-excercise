@@ -14,14 +14,14 @@ public class StageRepository : IStageRepository
         _dbConnection = dbConnection;
     }
 
-    public async Task<Stage?> GetByIdAsync(Guid id, CancellationToken ct = default)
+    public async Task<Stage?> GetByIdAsync(Guid id, IDbTransaction? transaction, CancellationToken ct = default)
     {
         const string sql = "SELECT * FROM Stages WHERE Id = @Id";
 
-        return await _dbConnection.QueryFirstOrDefaultWithTokenAsync<Stage>(sql, new { Id = id }, ct);
+        return await _dbConnection.QueryFirstOrDefaultWithTokenAsync<Stage>(sql, transaction, new { Id = id }, ct);
     }
 
-    public async Task AddAsync(Stage stage, IDbTransaction transaction, CancellationToken ct = default)
+    public async Task AddAsync(Stage stage, IDbTransaction? transaction, CancellationToken ct = default)
     {
         const string sql = @"
             INSERT INTO Stages (Id, Name, Ordering)

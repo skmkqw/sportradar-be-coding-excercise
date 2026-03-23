@@ -16,7 +16,7 @@ public class GetEventByIdQueryHandler : IRequestHandler<GetEventByIdQuery, Error
 
     public async Task<ErrorOr<Event>> Handle(GetEventByIdQuery request, CancellationToken cancellationToken)
     {
-        var result = await _eventRepository.GetByIdAsync(request.Id, cancellationToken);
+        var result = await _eventRepository.GetByIdAsync(request.Id, ct: cancellationToken);
         if (result == null)
             return Error.NotFound(code: "Event.NotFound",
                 description: $"Event with id: '{request.Id}' not found or doesn't exist.");
