@@ -7,11 +7,12 @@ using SportsCalendar.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddProblemDetails();
+
 builder.Services
-    .AddProblemDetails()
     .AddPresentation()
     .AddApplication()
-    .AddInfrastructure(builder.Configuration);
+    .AddInfrastructure();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
