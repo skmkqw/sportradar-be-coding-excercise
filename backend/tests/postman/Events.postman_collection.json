@@ -1,0 +1,307 @@
+{
+	"info": {
+		"_postman_id": "0df6d284-3cf3-41af-a097-7e6bbf2559a5",
+		"name": "Events",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "34323364",
+		"_collection_link": "https://www.postman.com/a88888-7735/workspace/sportradar-be-coding-task/collection/34323364-0df6d284-3cf3-41af-a097-7e6bbf2559a5?action=share&source=collection_link&creator=34323364"
+	},
+	"item": [
+		{
+			"name": "GetEventById",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", () => {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Response contains all essential nested objects\", () => {",
+							"    pm.expect(jsonData).to.have.property('homeTeam');",
+							"    pm.expect(jsonData).to.have.property('awayTeam');",
+							"    pm.expect(jsonData).to.have.property('competition');",
+							"});",
+							"",
+							"pm.test(\"Returned Event ID matches the requested ID\", () => {",
+							"    const expectedId = pm.collectionVariables.get(\"eventId\");",
+							"    pm.expect(jsonData.id).to.eql(expectedId);",
+							"});",
+							"",
+							"pm.test(\"Cross-Entity SportId consistency check\", () => {",
+							"    const targetSportId = jsonData.competition.sportId;",
+							"    ",
+							"    pm.expect(jsonData.homeTeam.sportId).to.eql(targetSportId, \"Home Team SportId mismatch\");",
+							"    pm.expect(jsonData.awayTeam.sportId).to.eql(targetSportId, \"Away Team SportId mismatch\");",
+							"});",
+							"",
+							"pm.test(\"WinnerId must match either Home or Away Team ID\", () => {",
+							"    if (jsonData.result && jsonData.result.winnerId) {",
+							"        const teamIds = [jsonData.homeTeam.id, jsonData.awayTeam.id];",
+							"        pm.expect(teamIds).to.include(jsonData.result.winnerId);",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"Total scores match the sum of period scores\", () => {",
+							"    if (jsonData.result && jsonData.result.periodScores) {",
+							"        const calculatedHomeScore = jsonData.result.periodScores.reduce((acc, p) => acc + p.homeScore, 0);",
+							"        const calculatedAwayScore = jsonData.result.periodScores.reduce((acc, p) => acc + p.awayScore, 0);",
+							"        ",
+							"        pm.expect(jsonData.result.homeScore).to.eql(calculatedHomeScore, \"Home score aggregation error\");",
+							"        pm.expect(jsonData.result.awayScore).to.eql(calculatedAwayScore, \"Away score aggregation error\");",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/events/{{eventId}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"events",
+						"{{eventId}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GetEvents",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", () => {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"",
+							"pm.test(\"Response contains events and metadata\", () => {",
+							"    pm.expect(jsonData).to.have.property('events').and.be.an('array');",
+							"    pm.expect(jsonData).to.have.property('metadata').and.be.an('object');",
+							"});",
+							"",
+							"pm.test(\"Metadata matches the requested pagination\", () => {",
+							"    const expectedPage = parseInt(pm.collectionVariables.get(\"page\")) || 1;",
+							"    const expectedPageSize = parseInt(pm.collectionVariables.get(\"pageSize\")) || 2;",
+							"    ",
+							"    pm.expect(jsonData.metadata.page).to.eql(expectedPage);",
+							"    pm.expect(jsonData.metadata.pageSize).to.eql(expectedPageSize);",
+							"    pm.expect(jsonData.events.length).to.be.at.most(expectedPageSize);",
+							"});",
+							"",
+							"pm.test(\"Events fall within the requested date range\", () => {",
+							"    const startVar = pm.collectionVariables.get(\"startDate\");",
+							"    const endVar = pm.collectionVariables.get(\"endDate\");",
+							"",
+							"    if (startVar && endVar) {",
+							"        const startDate = new Date(startVar);",
+							"        const endDate = new Date(endVar);",
+							"",
+							"        jsonData.events.forEach(event => {",
+							"            const eventDate = new Date(event.dateVenueUtc);",
+							"            ",
+							"            pm.expect(eventDate.getTime()).to.be.at.least(startDate.getTime(), ",
+							"                `Event ${event.id} (${event.dateVenueUtc}) is before startDate`);",
+							"            pm.expect(eventDate.getTime()).to.be.at.most(endDate.getTime(), ",
+							"                `Event ${event.id} (${event.dateVenueUtc}) is after endDate`);",
+							"        });",
+							"    }",
+							"});",
+							"",
+							"pm.test(\"List view should only contain IDs, not hydrated objects\", () => {",
+							"    if (jsonData.events.length > 0) {",
+							"        const firstEvent = jsonData.events[0];",
+							"        pm.expect(firstEvent).to.have.property('homeTeamId');",
+							"        pm.expect(firstEvent).to.not.have.property('homeTeam');",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/events?page={{page}}&pageSize={{pageSize}}&sportId={{sportId}}&startDate={{startDate}}&endDate={{endDate}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"events"
+					],
+					"query": [
+						{
+							"key": "page",
+							"value": "{{page}}"
+						},
+						{
+							"key": "pageSize",
+							"value": "{{pageSize}}"
+						},
+						{
+							"key": "sportId",
+							"value": "{{sportId}}"
+						},
+						{
+							"key": "startDate",
+							"value": "{{startDate}}"
+						},
+						{
+							"key": "endDate",
+							"value": "{{endDate}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "AddEvent",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 201 or 200\", () => {",
+							"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+							"});",
+							"",
+							"const jsonData = pm.response.json();",
+							"const requestBody = JSON.parse(pm.request.body.raw);",
+							"",
+							"pm.test(\"Response includes a valid New Event ID\", () => {",
+							"    pm.expect(jsonData.id).to.be.a('string').and.not.empty;",
+							"});",
+							"",
+							"pm.test(\"Core event data matches the request\", () => {",
+							"    pm.expect(jsonData.name).to.eql(requestBody.name);",
+							"    pm.expect(jsonData.season).to.eql(requestBody.season);",
+							"    pm.expect(jsonData.status).to.eql(requestBody.status.toLowerCase());",
+							"});",
+							"",
+							"pm.test(\"Score totals are correctly calculated from period scores\", () => {",
+							"    const expectedHomeTotal = requestBody.result.periodScores.reduce((a, b) => a + b.homeScore, 0);",
+							"    const expectedAwayTotal = requestBody.result.periodScores.reduce((a, b) => a + b.awayScore, 0);",
+							"    ",
+							"    pm.expect(jsonData.result.homeScore).to.eql(expectedHomeTotal);",
+							"    pm.expect(jsonData.result.awayScore).to.eql(expectedAwayTotal);",
+							"});",
+							"",
+							"pm.test(\"All match incidents were recorded\", () => {",
+							"    pm.expect(jsonData.result.matchIncidents.length).to.eql(requestBody.result.incidents.length);",
+							"    ",
+							"    const firstReqType = requestBody.result.incidents[0].type.toLowerCase();",
+							"    const firstResType = jsonData.result.matchIncidents[0].type;",
+							"    pm.expect(firstResType).to.eql(firstReqType);",
+							"});",
+							"",
+							"pm.test(\"Audit timestamps were generated\", () => {",
+							"    pm.expect(jsonData.createdAtUtc).to.not.be.null;",
+							"    pm.expect(jsonData.result.createdAtUtc).to.not.be.null;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {},
+						"requests": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Barcelona vs Real Madrid\",\n  \"season\": 2026,\n  \"status\": \"Played\",\n  \"description\": \"Mid-season title decider at the Emirates.\",\n  \"timeVenueUtc\": \"15:00:00\",\n  \"dateVenueUtc\": \"2026-03-23T20:00:00Z\",\n  \n  \"existingHomeTeamId\": \"3ba8da97-cfc3-4c42-8a50-cc9fdccfd4b3\",\n  \"newHomeTeam\": {\n    \"name\": \"Barcelona\",\n    \"officialName\": \"Barcelona Football Club\",\n    \"abbreviation\": \"BRC\",\n    \"countryCode\": \"GBR\",\n    \"stagePosition\": 1,\n    \"sportId\": \"C92A53BB-A6A6-44FB-B4C8-1D459F28BA6B\"\n  },\n\n  \"existingAwayTeamId\": \"d095e47e-808f-437e-a866-9e5fce99d133\",\n  \"newAwayTeam\": {\n    \"name\": \"Real Madrid\",\n    \"officialName\": \"Real Madrid Football Club\",\n    \"abbreviation\": \"RMD\",\n    \"countryCode\": \"GBR\",\n    \"stagePosition\": 2,\n    \"sportId\": \"C92A53BB-A6A6-44FB-B4C8-1D459F28BA6B\"\n  },\n\n  \"existingStadiumId\": \"56f85e6c-c975-45a9-a704-25851f4b37bd\",\n  \"newStadium\": {\n    \"name\": \"Emirates Stadium\",\n    \"countryCode\": \"GBR\"\n  },\n\n  \"existingStageId\": \"89c2dc50-4962-4f39-8a97-cb2df661d6aa\",\n  \"newStage\": {\n    \"name\": \"Regular Season\",\n    \"ordering\": 1\n  },\n\n  \"existingCompetitionId\": \"5c8cf39b-9319-4048-9e79-a0cab51d0c31\",\n  \"newCompetition\": {\n    \"name\": \"Legue of Champions\",\n    \"sportId\": \"C92A53BB-A6A6-44FB-B4C8-1D459F28BA6B\"\n  },\n\n  \"result\": {\n    \"winnerSide\": \"Home\",\n    \"message\": \"Arsenal secures a vital 3 points.\",\n    \"periodScores\": [\n      {\n        \"periodNumber\": 1,\n        \"homeScore\": 1,\n        \"awayScore\": 0\n      },\n      {\n        \"periodNumber\": 2,\n        \"homeScore\": 1,\n        \"awayScore\": 1\n      }\n    ],\n    \"incidents\": [\n      {\n        \"type\": \"Goal\",\n        \"side\": \"Home\",\n        \"matchMinute\": 23\n      },\n      {\n        \"type\": \"YellowCard\",\n        \"side\": \"Away\",\n        \"matchMinute\": 41\n      },\n      {\n        \"type\": \"Goal\",\n        \"side\": \"Away\",\n        \"matchMinute\": 65\n      },\n      {\n        \"type\": \"Goal\",\n        \"side\": \"Home\",\n        \"matchMinute\": 89\n      }\n    ]\n  }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/api/events",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"events"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "eventId",
+			"value": ""
+		},
+		{
+			"key": "page",
+			"value": ""
+		},
+		{
+			"key": "pageSize",
+			"value": ""
+		},
+		{
+			"key": "sportId",
+			"value": ""
+		},
+		{
+			"key": "startDate",
+			"value": ""
+		},
+		{
+			"key": "endDate",
+			"value": ""
+		}
+	]
+}
