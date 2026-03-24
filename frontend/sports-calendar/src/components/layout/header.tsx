@@ -42,15 +42,15 @@ export default function Header() {
                     {/* Brand Identity */}
                     <Link href="/" className="flex items-center gap-2">
                         <div className="bg-brand-red p-1">
-                            <Activity size={24} className="text-white" />
+                            <Activity size={22} className="text-white" />
                         </div>
-                        <span className="text-xl font-black tracking-tighter uppercase italic">
-                            SPORTS<span className="text-brand-red">CALENDAR</span>
+                        <span className="text-lg font-black tracking-tighter uppercase italic">
+                            SPORTSCALENDAR
                         </span>
                     </Link>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex items-center gap-8">
+                    <nav className="hidden md:flex justify-self-center items-center gap-8">
                         {navLinks.map((link) => (
                             <Link
                                 key={link.name}
@@ -63,9 +63,9 @@ export default function Header() {
                     </nav>
 
                     {/* Health Indicator */}
-                    <div className="hidden md:flex justify-center items-center gap-2">
+                    <div className="hidden md:flex justify-self-end items-center gap-2">
                         <div className={`h-2 w-2 rounded-full animate-pulse ${isHealthy ? 'bg-green-500' : 'bg-red-500'}`} />
-                        <span className="text-sm font-bold tracking-tighter text-white/50 uppercase">
+                        <span className="text-sm font-bold tracking-tighter text-white/80 uppercase">
                             API: {isHealthy ? 'ONLINE' : 'OFFLINE'}
                         </span>
                     </div>

@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 
-
-const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
 	title: "Sports Calendar",
@@ -25,7 +19,7 @@ export default function RootLayout({
 			<body className="bg-brand-navy font-sans text-white antialiased">
 				<div className="flex min-h-screen flex-col">
 					<Header />
-					<main className="flex-1">
+					<main className="bg-white/90 flex-1">
 						{children}
 					</main>
 					<Footer />
