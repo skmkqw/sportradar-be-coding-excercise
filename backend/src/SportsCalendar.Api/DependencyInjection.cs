@@ -15,7 +15,20 @@ public static class DependencyInjection
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
             });
-        services.AddMappers();
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(
+                name: "AllowFrontend",
+                configurePolicy: policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                            .AllowAnyHeader()
+                            .AllowAnyMethod();
+                }
+            );
+        });
+                services.AddMappers();
         services.AddSignalR();
 
         services.AddMappers();
