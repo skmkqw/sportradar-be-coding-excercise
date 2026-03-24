@@ -19,6 +19,10 @@ builder.Services.AddProblemDetails();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
+app.UseCors("AllowFrontend");
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
@@ -38,8 +42,6 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     }
 });
 
-app.UseCors("AllowFrontend");
-app.UseExceptionHandler();
 app.MapControllers();
 
 app.Run();
