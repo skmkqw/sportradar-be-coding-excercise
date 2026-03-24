@@ -23,6 +23,8 @@ app.UseExceptionHandler();
 
 app.UseCors("AllowFrontend");
 
+app.UseCors("AllowFrontend");
+
 app.MapHealthChecks("/health", new HealthCheckOptions
 {
     ResponseWriter = async (context, report) =>
