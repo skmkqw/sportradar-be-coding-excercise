@@ -38,6 +38,7 @@ app.MapHealthChecks("/health", new HealthCheckOptions
     }
 });
 
+app.UseCors("AllowFrontend");
 app.UseExceptionHandler();
 app.MapControllers();
 
