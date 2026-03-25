@@ -1,135 +1,208 @@
+# Sports Calendar
+
 ## Overview
 
-The Sports Calendar API allows users to manage sport events data. 
+Sports Calendar is a full-stack app for browsing, creating, and inspecting sports events.
 
-List of currently available endpoitns:
+The project currently includes:
 
-- `GET` `/api/events/{{eventId}}`: Fetches event & all child entity details for a single event.
-- `GET` `/api/events?page=&pageSize=`: Fetches multiple event details. Provides paginated responses with total count of events meeting the filter requirements.
+- a SQL Server database
+- a .NET backend API
+- a Next.js frontend
+- Docker Compose orchestration for all three services
 
-  Available filters:
-  - `startDate`
-  - `endDate`
-  - `sportId`
-  
-  All query parameters are optional.
-- `POST` `/api/events`: Creates an event with child entities (specify in `new{EntityName}`) or links existing entities (specify entity id in `existing{EntityId}`).
+## Current App State
 
-  If both provided **prioritizes existing entities**.
+### Frontend
 
----
+The Next.js app lives in `frontend/sports-calendar` and currently provides:
 
-## Key Features
+- a month-based calendar view
+- month and year navigation
+- event cards grouped by venue date
+- clickable event detail pages
+- a responsive event details screen with score, teams, venue, period scores, and incidents
+- a responsive "Create Event" page
+- a "Populate with placeholder data" helper button for fast form testing
+- an API health indicator in the header
 
-- **Atomic Event Creation:** Create an event, its teams, stadium, and competition in a single transactional request.
-- **Clean Architecture:** Strict separation of concerns between Api, Contracts, Domain, Application, and Infrastructure layers.
-- **Result Tracking:** Detailed match results including period scores and specific incidents (Goals, Yellow Cards, etc.).
-- **Docker Integration:** Configured Docker & Docker-Compose support (api + database) for easier deployments.
-- **Tests:** Created crucial tests for each implented endpoint.
-- **Health Checks**:
+### Backend API
 
-  The API includes a diagnostic endpoint to verify system readiness:
+The API currently exposes:
 
-  **Endpoint:** `/health`
-  checks: 
-  - self: API responsiveness.
-  - sqlserver: Database connectivity.
+- `GET /health`
+  Checks API and database readiness.
 
----
+- `GET /api/events/{eventId}`
+  Returns a single event with nested child entities and result details.
+
+- `GET /api/events?page=&pageSize=&startDate=&endDate=&sportId=`
+  Returns paginated events. All query parameters are optional.
+
+- `POST /api/events`
+  Creates a new event.
+  Existing child entity IDs take precedence over any provided `new...` payloads.
 
 ## Tech Stack
 
-- **Framework:** .NET 10.0
+- Frontend: Next.js 16, React 19, TypeScript, Tailwind CSS
+- Backend: .NET 10, ASP.NET Core, MediatR, FluentValidation, Mapster
+- Data access: Dapper
+- Database: SQL Server 2022
+- Containerization: Docker, Docker Compose
 
-- **Database:** SQL Server 
+## Repository Layout
 
-- **ORM:** Dapper
- 
-- **Patterns:** CQRS with MediatR, Unit of Work, Repository Pattern
+```text
+.
+├── backend/
+│   ├── src/
+│   └── tests/
+├── database/
+├── frontend/
+│   └── sports-calendar/
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
 
-- **Error Handling:** ErrorOr, ProblemDetails
+## Environment Variables
 
-- **Mapping:** Mapster
+Copy `.env.example` to `.env` in the repository root before running Docker Compose.
 
-- **Validaton:** FluentValidation
+Current root environment variables:
 
-- **Deployment:** Docker
+- `DB_NAME`
+- `DB_USER`
+- `DB_PASSWORD`
+- `DB_PORT`
+- `CONNECTION_STRING`
+- `NEXT_PUBLIC_API_BASE_URL`
+- `INTERNAL_API_BASE_URL`
 
-- **Testing:** Postman
+What they are used for:
 
----
+- `DB_*` values configure SQL Server and the backend connection string
+- `NEXT_PUBLIC_API_BASE_URL` is used by the browser-side frontend code
+- `INTERNAL_API_BASE_URL` is used by server-side frontend code inside Docker
 
-## Setup & Installation
+## Running With Docker
 
-### Prerequisites
+From the repository root:
+
+```bash
+docker compose up -d --build
+```
+
+This starts:
+
+- `sqlserver`
+- `backend`
+- `frontend`
+
+Default local URLs:
+
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:5000`
+- Health check: `http://localhost:5000/health`
+
+## Running Locally Without Docker
+
+### Backend
+
+Requirements:
 
 - .NET 10 SDK
-
 - SQL Server
 
-- Postman (optional)
+Start the backend from the backend source folder:
 
-- Docker and Docker-Compose (optional)
-
-
-### Installation
-
-### Clone the Repository
-```
-git clone https://github.com/skmkqw/sportradar-be-coding-excercise.git
-cd SportsCalendar
-```
-
-### Configure Database
-
-- Start the Database (if running without Docker).
-Ensure you have a working SQL Server instance.
-
-- Connect to your database using preferred tools and execute: `init-db.sql` to initialize the database and `seed-db.sql` to populate the database with seed data.
-
-- Create a `.env` file (use `.env.example` for reference). Update the connection string.
-
-### Run the Application 
-Local:
-```
+```bash
 cd backend/src
 dotnet run --project SportsCalendar.Api
 ```
 
-Docker:
+### Frontend
+
+Requirements:
+
+- Node.js 22+
+
+Start the frontend:
+
+```bash
+cd frontend/sports-calendar
+npm install
+npm run dev
 ```
-docker compose up -d --build
+
+The frontend expects the API at `http://localhost:5000` by default.
+
+If needed, you can override that with:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+INTERNAL_API_BASE_URL=http://localhost:5000
 ```
 
-The API will typically be available at http://localhost:5138 (local) or https://localhost:5000 (Docker).
+## Frontend Notes
 
-### Test the Application
-- Import colletions and environments from `/backend/tests/postman` to your Postman client.
-- Assign values to collection/environment variables.
-- Run collections or individual requests
+The frontend uses two API base URLs:
 
----
+- `NEXT_PUBLIC_API_BASE_URL`
+  Used in browser/client code.
 
-## Architectural Decisions & Assumptions
+- `INTERNAL_API_BASE_URL`
+  Used in server actions and server-rendered data fetching.
 
-**1. "Resolve or Create" Pattern**
+In Docker Compose the internal API URL must point to the backend service name:
 
-  In the AddEvent command, I chose a Resolution Result pattern. The API allows client to provide an existingId or a newEntity object for Teams, Stadiums, Stages and Competitions.
-  
-  Decision: Entities are resolved before starting a database transaction. This minimizes lock contention and prevents partial data writes if a validation fails halfway through.
+```text
+http://backend:8080
+```
 
-**2. The "Anchor" SportId**
+## Event Creation Payload Rules
 
-  Decision: The Competition acts as the source of truth for the event's sport.
+For child entities:
 
-  Assumption: Every team assigned to an event must share the same SportId as the competition. If a user tries to create an event with mismatched sports, the API returns a Validation error before touching the database.
+- Home team: required
+- Away team: required
+- Competition: required
+- Stadium: optional
+- Stage: optional
+- Result: optional
 
-**3. Dapper + Unit of Work**
-  
-  Decision: I used Dapper for its speed but wrapped it in a custom IUnitOfWork to manage IDbTransaction.
-  
-  Assumption: All repositories must explicitly receive the IDbTransaction object to ensure they participate in the same atomic operation initiated by the Command Handler.
+For each child entity, either:
 
-**4. Result Normalization**
+- provide an existing ID, or
+- provide a `new...` object
 
-  Assumption: Total scores for an event are derived from the sum of PeriodScores. While the database stores the total for quick lookups, the domain logic ensures these are kept in sync during creation.
+If both are sent, the existing ID is used and the new object is ignored.
+
+## Testing
+
+### Frontend
+
+From `frontend/sports-calendar`:
+
+```bash
+npm run lint
+```
+
+### Backend
+
+Postman collections are available under `backend/tests/postman`.
+
+## Architectural Notes
+
+### Resolve-or-create child entities
+
+The API accepts either existing IDs or full payloads for new related entities. This keeps event creation flexible while preserving referential integrity.
+
+### Competition as sport anchor
+
+The competition acts as the source of truth for the sport, and related teams are expected to match that sport.
+
+### Atomic creation
+
+Event creation, related entities, and result data are handled transactionally in the backend.
