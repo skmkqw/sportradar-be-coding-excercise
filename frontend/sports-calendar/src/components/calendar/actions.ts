@@ -1,9 +1,9 @@
 "use server";
 
-import { axiosInstance } from "@/lib/axios";
-import type { CalendarEvent, EventsResponse } from "./types";
+import type { CalendarEvent, EventDetails, EventsResponse } from "./types";
 
 const DEFAULT_PAGE_SIZE = 10;
+const API_BASE_URL = "http://localhost:5000";
 
 function getMonthRange(year: number, month: number) {
 	const start = new Date(Date.UTC(year, month, 1));
@@ -13,6 +13,34 @@ function getMonthRange(year: number, month: number) {
 		startDate: start.toISOString().slice(0, 10),
 		endDate: end.toISOString().slice(0, 10),
 	};
+}
+
+function createApiUrl(pathname: string, searchParams?: Record<string, string>) {
+	const url = new URL(pathname, API_BASE_URL);
+
+	if (searchParams) {
+		for (const [key, value] of Object.entries(searchParams)) {
+			url.searchParams.set(key, value);
+		}
+	}
+
+	return url;
+}
+
+async function fetchJson<T>(url: URL) {
+	const response = await fetch(url, {
+		method: "GET",
+		headers: {
+			"Content-Type": "application/json",
+		},
+		cache: "no-store",
+	});
+
+	if (!response.ok) {
+		throw new Error(`Request failed with status ${response.status}`);
+	}
+
+	return (await response.json()) as T;
 }
 
 export async function fetchMonthEventsAction({
@@ -28,14 +56,14 @@ export async function fetchMonthEventsAction({
 	const collectedEvents: CalendarEvent[] = [];
 
 	do {
-		const { data: payload } = await axiosInstance.get<EventsResponse>("/api/events", {
-			params: {
-				page,
-				pageSize: DEFAULT_PAGE_SIZE,
+		const payload = await fetchJson<EventsResponse>(
+			createApiUrl("/api/events", {
+				page: String(page),
+				pageSize: String(DEFAULT_PAGE_SIZE),
 				startDate,
 				endDate,
-			},
-		});
+			}),
+		);
 
 		collectedEvents.push(...payload.events);
 		total = payload.metadata.total;
@@ -43,4 +71,10 @@ export async function fetchMonthEventsAction({
 	} while (collectedEvents.length < total);
 
 	return collectedEvents;
+}
+
+export async function fetchEventDetailsAction(eventId: string) {
+	return fetchJson<EventDetails>(
+		createApiUrl(`/api/events/${eventId}`),
+	);
 }

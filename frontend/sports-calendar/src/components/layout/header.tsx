@@ -35,7 +35,7 @@ export default function Header() {
     ];
 
     return (
-        <header className="sticky top-0 z-50 border-b border-white/10 bg-brand-navy/90 backdrop-blur-md">
+        <header className="sticky top-0 z-50 border-b bg-black border-white/10 bg-brand-navy/90 backdrop-blur-md">
             <Container className="py-2 md:py-4">
                 <div className="grid grid-cols-2 md:grid-cols-3">
 
