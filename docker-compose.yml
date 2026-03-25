@@ -31,5 +31,20 @@ services:
       retries: 3
       start_period: 30s
 
+  frontend:
+    image: sports-calendar-frontend
+    container_name: sports-calendar-frontend
+    build:
+      context: ./frontend/sports-calendar
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_BASE_URL=http://localhost:5000
+      - INTERNAL_API_BASE_URL=http://backend:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
 volumes:
   mssql-data:
