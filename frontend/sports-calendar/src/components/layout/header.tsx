@@ -30,7 +30,7 @@ export default function Header() {
 
     const navLinks = [
         { name: 'CALENDAR', href: '/' },
-        { name: 'SPORTS', href: '#' },
+        { name: 'NEW EVENT', href: '/events/new' },
         { name: 'GITHUB', href: '#' },
     ];
 
