@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import type { CalendarEvent, EventDetails, EventsResponse } from "./types";
 
 const DEFAULT_PAGE_SIZE = 10;
-const API_BASE_URL = "http://localhost:5000";
+const API_BASE_URL = process.env.INTERNAL_API_BASE_URL ?? "http://localhost:5000";
 
 function getMonthRange(year: number, month: number) {
 	const start = new Date(Date.UTC(year, month, 1));
