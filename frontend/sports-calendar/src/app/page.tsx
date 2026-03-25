@@ -1,17 +1,34 @@
-export default function HomePage() {
-	return (
-		<section className="relative flex min-h-[30vh] items-center justify-center py-14 overflow-hidden">
-			<div className="container relative z-10 px-4 text-center">
-				<h1 className="text-6xl md:text-8xl font-black leading-none tracking-tighter uppercase italic">
-					<span className="block text-black">SPORTS</span>
-					<span className="block text-transparent stroke-text" style={{ WebkitTextStroke: '2px black' }}>
-						CALENDAR
-					</span>
-				</h1>
-				<p className="mt-4 text-sm font-bold tracking-[0.4em] text-black/60 uppercase">
-					View & Edit Sports Event Data
-				</p>
-			</div>
-		</section>
+import MonthCalendar from "@/components/calendar/month-calendar";
+
+type HomePageProps = {
+	searchParams: Promise<{
+		month?: string;
+		year?: string;
+	}>;
+};
+
+function getSelectedDate(month?: string, year?: string) {
+	const today = new Date();
+	const parsedMonth = Number(month);
+	const parsedYear = Number(year);
+	const selectedMonth =
+		Number.isInteger(parsedMonth) && parsedMonth >= 1 && parsedMonth <= 12
+			? parsedMonth - 1
+			: today.getMonth();
+	const selectedYear =
+		Number.isInteger(parsedYear) && parsedYear >= 2000 && parsedYear <= 2100
+			? parsedYear
+			: today.getFullYear();
+
+	return { selectedMonth, selectedYear };
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+	const resolvedSearchParams = await searchParams;
+	const { selectedMonth, selectedYear } = getSelectedDate(
+		resolvedSearchParams.month,
+		resolvedSearchParams.year,
 	);
+
+	return <MonthCalendar selectedMonth={selectedMonth} selectedYear={selectedYear} />;
 }
