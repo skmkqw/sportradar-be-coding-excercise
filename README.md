@@ -86,6 +86,13 @@ What they are used for:
 - `NEXT_PUBLIC_API_BASE_URL` is used by the browser-side frontend code
 - `INTERNAL_API_BASE_URL` is used by server-side frontend code inside Docker
 
+## Database
+
+There are 2 `.sql` scripts in `/database` folder:
+
+- `init-db.sql` - run this to create a full `SportsCalendar` DB schema.
+- `seed-db.sql` - run this to populate the database with initial data.
+
 ## Running With Docker
 
 From the repository root:
