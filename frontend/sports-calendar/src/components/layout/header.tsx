@@ -31,7 +31,7 @@ export default function Header() {
     const navLinks = [
         { name: 'CALENDAR', href: '/' },
         { name: 'NEW EVENT', href: '/events/new' },
-        { name: 'GITHUB', href: '#' },
+        { name: 'GITHUB', href: 'https://github.com/skmkqw/sportradar-be-coding-excercise/tree/main' },
     ];
 
     return (
